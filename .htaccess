@@ -1,0 +1,3 @@
+RewriteEngine On
+RewriteBase /~bsterne
+RewriteRule ^content[^-] https://developer.mozilla.org/en/Introducing_Content_Security_Policy [R=301,L]

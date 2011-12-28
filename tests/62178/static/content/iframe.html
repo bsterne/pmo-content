@@ -1,0 +1,31 @@
+<html>
+<head>
+<style>
+body {
+  color: #080;
+}
+.test {
+  margin: 1em;
+  padding: 1em;
+  border: 1px solid #080;
+  border-radius: 5px;
+}
+.fail {
+  border-color: red;
+  color: red;
+}
+</style>
+</head>
+
+<body>
+Insecure script: <span id="result5">did not load</span>
+<script>
+  // load an insecure script from a secure iframe
+  parent.log("Attemping to load insecure script 3.");
+  var s = document.createElement("script");
+  s.src = "http://people.mozilla.com/~bsterne/tests/62178/static/script/script3.js";
+  document.body.appendChild(s);
+</script>
+</body>
+</html>
+

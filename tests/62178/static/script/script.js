@@ -1,0 +1,1 @@
+document.getElementById("result_script").textContent = "LOADED";

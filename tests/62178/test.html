@@ -1,0 +1,139 @@
+<html>
+<head>
+<title>Test Mixed Content Blocking</title>
+<style>
+.test {
+  color: #080;
+  margin: 1em;
+  padding: 1em;
+  border: 1px solid #080;
+  border-radius: 5px;
+}
+.fail {
+  border-color: red;
+  color: red;
+}
+object, #styletest {
+  display: none;
+}
+iframe {
+  vertical-align: middle;
+  border-radius: 5px;
+  border-width: 1px;
+}
+</style>
+<!--
+<link rel="stylesheet" type="text/css" href="http://people.mozilla.com/~bsterne/tests/62178/static/style/style.css" />
+-->
+</head>
+<body onload="runTests();">
+<p>This document runs the following tests:
+  <ol>
+    <li>loads an insecure script from a secure iframe at <code>t = 0s</code></li>
+    <!--
+    <li>loads an insecure external script file at <code>t = 1s</code></li>
+    <li>loads a second insecure external script file at <code>t = 2s</code></li>
+    <li>loads an insecure &lt;object&gt; element</li>
+    <li>loads an insecure stylesheet</li>
+    -->
+  </ol>
+</p>
+
+<div class="test">
+  Secure iframe:
+  <iframe id="frame" src="https://people.mozilla.com/~bsterne/tests/62178/static/content/iframe.html"></iframe>
+</div>
+
+<!--
+
+<div class="test">
+  Insecure script 1: <span id="result1">did not load</span>
+</div>
+
+<div class="test">
+  Insecure script 2: <span id="result2">did not load</span>
+</div>
+
+<div id="plugintest" class="test">
+  Insecure plugin content: <span id="result3">did not load</span>
+</div>
+
+<div class="test">
+  Insecure stylesheet: <span id="result4">did not load</span>
+  <span id="styletest">test</span>
+</div>
+
+<div>
+  <p>This is a <a href="https://people.mozilla.com/~bsterne">link</a>.</p>
+</div>
+
+-->
+
+<pre id="log"></pre>
+
+<script>
+function log(s) {
+  var log = document.getElementById("log");
+  log.textContent = log.textContent + s + "\n";
+}
+
+window.addEventListener("message", function(event) {
+  log("Received message from " + event.origin + ": " + event.data);
+  if (event.origin != "http://people.mozilla.com")
+    return;
+     
+  // look for message from our <object>
+  if (event.data == "object loaded") {
+    var r = document.getElementById("result3");
+    r.textContent = "LOADED";
+    r.parentElement.className = "test fail";
+  }
+}, false);
+
+function runTests() {
+  /*
+
+  // Test 1:
+  // load the first insecure script after 1 second so we can test what
+  // happens when the MixedContentBlocked happens in a background tab
+  window.setTimeout(function() {
+    log("Attemping to load insecure script 1.");
+    var s = document.createElement("script");
+    s.src = "http://people.mozilla.com/~bsterne/tests/62178/static/script/script1.js";
+    document.body.appendChild(s);
+  }, 1000);
+
+  // Test 2:
+  // load the second insecure script
+  window.setTimeout(function() {
+    log("Attemping to load insecure script 2.");
+    var s = document.createElement("script");
+    s.src = "http://people.mozilla.com/~bsterne/tests/62178/static/script/script2.js";
+    document.body.appendChild(s);
+  }, 2000);
+
+  // Test 3:
+  // load an insecure "plugin"
+  log("Attempting to load insecure <object> element");
+  var o = document.createElement("object");
+  o.type = "text/html";
+  o.data = "http://people.mozilla.com/~bsterne/tests/62178/static/script/object.html";
+  document.getElementById("result3").appendChild(o);
+  
+  // Test 4:
+  // check if the insecure stylesheet loaded
+  log("Checking insecure stylesheet status");
+  var t = document.getElementById("styletest");
+  var c = window.getComputedStyle(t, null);
+  if (c.getPropertyValue("color") == "rgb(255, 0, 0)") {
+    var r = document.getElementById("result4");
+    r.textContent = "LOADED";
+    r.parentElement.className = "test fail";  
+  }
+  
+  */
+}
+</script>
+</body>
+</html>
+

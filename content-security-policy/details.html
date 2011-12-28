@@ -1,0 +1,499 @@
+<html>
+<head>
+<link rel="stylesheet" href="style/style.css" type="text/css" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Content Security Policy Details</title>
+<script>
+function toggleExample(toShow) {
+  var el = document.getElementById(toShow);
+  if (el.style.display == "" || el.style.display == "none")
+    el.style.display = "table";
+  else
+    el.style.display = "none";
+}
+</script>
+</head>
+<body>
+<div id="outer">
+  <div id="inner">
+    <div id="header"><div id="headerWrap"><h1>Content Security Policy Details</h1></div></div>
+    <div id="hnav"><ul><li><a href="index.html">Overview</a></li><li><a class="current" href="details.html">Details</a></li><li><a href="https://dvcs.w3.org/hg/content-security-policy/raw-file/tip/csp-specification.dev.html">Spec</a></li><li><a href="download.html">Download</a></li><li><a href="demo.php">Demo</a></li><li><a href="wordpress.html">WordPress</a></li><li><a href="origin-header-proposal.html">Origin Header</a></li><li><a href="discussion.html">Discussion</a></li></ul></div>
+    <div id="main">
+      <div id="mainWrapper">
+        <div class="warning">
+          <p><b>Warning</b>: This site documents the original and <b>out-of-date</b> Mozilla proposal for Content Security Policy.</p>
+          <p>The current and official Content Security Policy specification is undergoing standardization at the <a href="http://www.w3.org/2011/webappsec/">W3C Web Application Security Working Group</a> and the latest revision of the specification can be found here:</p>
+          <p class="center"><b><a href="https://dvcs.w3.org/hg/content-security-policy/raw-file/tip/csp-specification.dev.html">CSP Specification</a></b></p>
+        </div>
+        <p class="center small"><a href="changelog">Version</a>: <a href="details-0.1.html">0.1</a> | <a href="details-0.2.html">0.2</a> | <a href="details-1.0.html">1.0</a> | 2.0 (cur)</p>
+        <div class="highlight">
+          <p>Content Security Policy provides granular controls enabling website administrators to restrict the locations from which different types of web content can load.  This document first describes the <a href="#restrictions">restrictions</a> which are enabled globally when Content Security Policy is used.  Next, details are provided regarding the <a href="#policy-directives">types of policies</a> administrators can declare and a description of how <a href="#content-sources">valid content sources</a> are defined.  Following that are some <a href="#examples">example policy sets</a> to ilustrate various Content Security Policy use cases.</p>
+          <p>Browser vendors and websites who wish to implement Content Security Policy should refer to the <a href="https://wiki.mozilla.org/Security/CSP/Spec" title="Content Security Policy Specification">specification document</a> for detailed information regarding CSP syntax and behavior.</p>
+          <p class="nomargin">Also, it seems appropriate to acknowledge <a href="http://ha.ckers.org/blog/20070811/content-restrictions-a-call-for-input/">RSnake</a> and <a href="http://www.gerv.net/security/content-restrictions/">Gerv</a> who originated this idea.  <a href="http://jeremiahgrossman.blogspot.com/">Jeremiah Grossman</a> has also been extremely helpful in advancing it.</p>
+        </div>
+        <a name="restrictions"></a><h2>Content Restrictions</h2>
+        <p>The main <a href="index.html#goals">goal</a> of Content Security Policy is to prevent malicious code from being injected into a website and executed within the context of that site.  Hence, a recurring theme in CSP is to prevent the creation of JavaScript code from potentially tainted <a href="https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String">strings</a>.</p>
+        <p>The following restrictions will apply whenever any CSP directives are declared for a document:</p>
+        <ol>
+          <a name="no-inline-script"></a><li><b>No inline JavaScript will execute</b>
+            <ul>
+              <li class="deny">Restricted:
+                <ul>
+                  <li>The contents of internal <code>&lt;script&gt;</code> nodes</li>
+                  <li><code>javascript:</code> URIs, e.g. <code>&lt;a href="javascript:bad_stuff()"&gt;</code></li>
+                  <li>Event-handling attributes, e.g. <code>&lt;a onclick="bad_stuff()"&gt;</code></li>
+                </ul>
+              </li>
+              <li class="allow">Allowed:
+                <ul>
+                  <li>Script in files loaded from white-listed sources</li>
+                </ul>
+              </li>
+              <li>Justification:
+                <ul>
+                  <li>XSS attacks are possible because the browser has no way to differentiate between content the server intended to send and content injected by an attacker.  Content Security Policy forces the <strong>separation of code from content</strong> and requires authors to be explicit about the code they intend to execute</li>
+                  <li>Common vectors for injecting script into web pages have been restricted in CSP.  With CSP enabled, the bar for a successful XSS attack is raised substantially, requiring an attacker to:
+                    <ol>
+                      <li>inject a <code>&lt;script&gt;</code> tag into the target document</li>
+                      <li>point this tag at a script file on a white-listed host</li>
+                      <li>control the contents of the white-listed script file</li>
+                    </ol>
+                  </li>
+                  <a name="event-handling"></a><li>Note: websites are still able to peform event-handling in the following ways:
+                    <ol>
+                      <li>setting the on&lt;event> properties of an element, e.g. <code>element.onclick = myFunc;</code></li>
+                      <li>using <a href="https://developer.mozilla.org/En/DOM/Element.addEventListener"><code>addEventListener</code></a>, e.g. <code>element.addEventListener("click", myFunc, false);</code></li>
+                    </ol>
+                    Both methods need to be used from within valid white-listed script files.</li>
+                </ul>
+              </li>
+              <li>Vulnerability types mitigated:
+                <ol>
+                  <li>Reflected XSS <a class="small" href="javascript:toggleExample('reflected-xss')">Example</a>
+                    <table class="exploit" id="reflected-xss">
+                      <tr><th>Example: Search engine using improper input validation echoes unfiltered query string into results page</th></tr>
+                      <tr><td>&lt;h1>Bad Search&lt;/h1><br/>&lt;p>Your search for "<span class="deny">&lt;script&gt;bad_stuff();&lt;/script&gt;</span>" returned 0 results.&lt;/p></td></tr>
+                    </table>
+                  </li>
+                  <li>Stored XSS <a class="small" href="javascript:toggleExample('stored-xss')">Example</a>
+                    <table class="exploit" id="stored-xss">
+                      <tr><th>Example: Social news site allowing metacharacters to be stored in usernames and displaying them unfiltered</th></tr>
+                      <tr><td>&lt;h1>Bad News Portal&lt;/h1><br/>&lt;p>Today's stories:&lt;/p><br/>&lt;ol><br/> &nbsp; &nbsp; &lt;li>&lt;b>Something big happened!&lt;/b> - Posted by <span class="deny">&lt;script&gt;bad_stuff();&lt;/script&gt;</span>&lt;/li><br/>&lt;/ol></td></tr>
+                    </table>
+                  </li>
+                  <li><code>javascript:</code> link injection <a class="small" href="javascript:toggleExample('js-link-inject')">Example</a>
+                    <table class="exploit" id="js-link-inject">
+                      <tr><th>Example: Blog allowing commenters to specify an arbitrary link to their own website, including <code>javascript:</code> URLs</th></tr>
+                      <tr><td>&lt;h1>Blog Comments&lt;/h1><br/>&lt;small>Posted by: &lt;a href="<span class="deny">javascript:bad_stuff()</span>">h4x0r&lt;/a> on 19 Mar 2009&lt;/small><br/>&lt;p>If you like my comment, please visit my site.&lt;/p></td></tr>
+                    </table>
+                  </li>
+                  <li>HTML attribute injection <a class="small" href="javascript:toggleExample('attr-inject')">Example</a>
+                    <table class="exploit" id="attr-inject">
+                      <tr><th>Example: Website with alternate stylesheets gets CSS properties from unfiltered query string, e.g.<br/><em>http://example.site/index.html?view=<span class="deny">print+onload=&quot;bad_stuff()</span></em></th></tr>
+                      <tr><td>&lt;html&gt;<br/>&lt;body class=&quot;<span class="deny">print&quot; onload=&quot;bad_stuff()</span>&quot;&gt;</td></tr>
+                    </table>
+                  </li>
+                </ol>
+              </li>
+            </ul>
+          </li>
+          <li><b>Code will not be created from strings</b>
+            <ul>
+              <li class="deny">Restricted:
+                <ul>
+                  <li><a href="https://developer.mozilla.org/En/Core_JavaScript_1.5_Reference/Global_Functions/Eval"><code>eval()</code></a></li>
+                  <li><a href="https://developer.mozilla.org/En/DOM/Window.setTimeout"><code>setTimeout</code></a> called with a <a href="https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/String">String</a> argument, e.g. <code>setTimeout("evil string...", 1000)</code></li>
+                  <li><a href="https://developer.mozilla.org/En/DOM/Window.setInterval"><code>setInterval</code></a> called with a String argument, e.g. <code>setInterval("evil string...", 1000)</code></li>
+                  <li><a href="https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Function"><code>new Function</code></a> constructor, e.g. <code>var f = new Function("evil string...")</code></li>
+                  <li><code>javascript:</code> URIs, e.g. <code>&lt;a href="javascript:bad_stuff()"&gt;</code></li>
+                </ul>
+              </li>
+              <li class="allow">Allowed:
+                <ul>
+                  <li>Functions declared using the <a href="https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Operators/Special_Operators/function_Operator">function operator</a>, e.g. <code>function f() { some_code }</code>, or <code>var f = function() { some_code }</code></li>
+                  <li><a href="https://developer.mozilla.org/En/DOM/Window.setTimeout"><code>setTimeout</code></a> called with a <a href="https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Function">Function</a> argument, e.g. <code>setTimeout(myFunc, 1000)</code></li>
+                  <li><a href="https://developer.mozilla.org/En/DOM/Window.setInterval"><code>setInterval</code></a> called with a <a href="https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/Function">Function</a> argument, e.g. <code>setInterval(myFunc, 1000)</code></li>
+                </ul>
+              </li>
+              <li>Justification:
+                <ul>
+                  <li><code>eval</code> and related functions make trivial the task of <b>generating code from strings, which commonly come from untrusted sources, are loaded via insecure protocols, and can become tainted with attacker controlled data</b>.</li>
+                  <li>Once tainted data has been introduced to a JavaScript program, it is extremely difficult to control its propogation and calls to <code>eval</code> and similar are likely to incorporate tainted strings containing malicious code.</li>
+                  <li>Note: the common AJAX pattern in which a site makes a <a href="https://developer.mozilla.org/En/XMLHttpRequest"><code>XMLHttpRequest</code></a> to fetch JSON data is still enabled under CSP using a <a href="http://www.json.org/js.html">JSON parser</a> or inside a browser that has <a href="https://developer.mozilla.org/En/Using_JSON_in_Firefox">native JSON support</a>.
+                </ul>
+              </li>
+              <li>Vulnerability types mitigated:
+                <ol>
+                  <li>AJAX request tampering <a class="small" href="javascript:toggleExample('ajax-tamper')">Example</a>
+                    <table class="exploit" id="ajax-tamper">
+                      <tr><th colspan="2">Example: Website makes <a href="https://developer.mozilla.org/en/AJAX">AJAX</a> request to a JSON feed using attacker-controlled data and calls <code>eval</code> on the response, e.g.<br/><em>http://example.site/index.html<span class="deny">?&quot;});bad_stuff()//</span></em></th></tr>
+                      <tr>
+                        <td>Requesting page:</td>
+                        <td><pre>var ajaxUrl = "http://example.site/get_data.cgi?ref="+<span class="deny">location.href</span>;
+ajaxResponse = makeAjaxRequest( ajaxUrl );
+myData = eval( "(" + <span class="deny">ajaxResponse</span> + ")" );</pre></td>
+                      </tr>
+                      <tr>
+                        <td>AJAX Response:</td>
+                        <td><pre>{
+  referer: "http://example.site/index.html<span class="deny">?&quot;});bad_stuff()//</span>",
+  data: 42
+}</pre></td></tr>
+                    </table>
+                  </li>
+                  <li>Improper use of dynamic properties <a class="small" href="javascript:toggleExample('dyn-prop')">Example</a>
+                    <table class="exploit" id="dyn-prop">
+                      <tr><th colspan="2">Example: Website uses <code>eval</code> to make references to dynamic JS object properties using attacker-controlled values</th>
+                      <tr>
+                        <td style="width:35%">Unsanitized input value used to determine property name</td>
+                        <td><pre>var <span class="deny">myName</span> = document.getElementsByTagName("input")[0].value;
+eval( "myObj.prop_" + <span class="deny">myName</span> + " = 42" );</pre></td>
+                      </tr>
+                      <tr>
+                        <td>Attacker sends malicious code to the <code>eval</code> call through the input control</td>
+                        <td><input type="text" value="; bad_stuff() //" class="deny" /></td>
+                      </tr>
+                      <tr>
+                        <td>The resulting code is executed</td>
+                        <td><pre>eval( "myObj.prop_<span class="deny">; bad_stuff() //</span> = 42" );</pre></td>
+                      </tr>
+                    </table>
+                  </li>
+                </ol>
+              </li>
+            </ul>
+          </li>
+          <li><b>No <code>data:</code> URIs unless opted-in to via explicit policy</b>
+            <ul>
+              <li class="deny">Restricted:
+                <ul>
+                  <li><a href="https://developer.mozilla.org/en/The_data_URL_scheme"><code>data:</code></a> URIs as a source for inline content</li>
+                </ul>
+              </li>
+              <li class="allow">Allowed:
+                <ul>
+                  <li><code>data:</code> URIs as a source for inline content when explicitly opted-in to, e.g.<br/><code>X-Content-Security-Policy: allow 'self'; <b>img-src data:</b></code></li>
+                </ul>
+              </li>
+              <li>Justification:
+                <ul>
+                  <li>The <a href="https://developer.mozilla.org/en/The_data_URL_scheme"><code>data:</code> URI scheme</a> is designed to allow the loading of arbitrary textual or binary data into a document, including HTML, JavaScript, images, media files, etc.</li>
+                  <li><code>data:</code> URIs are a potential vector for HTML and JavaScript injection which can be used by an attacker for XSS or website defacement.</li>
+                  <li>The increase in attack surface created by <code>data:</code> URIs, and additional input sanitization required by sites wishing to use them justifies the opt-in requirement for this feature in CSP.</li>
+                </ul>
+              </li>
+              <li>Vulnerability types mitigated:
+                <ol>
+                  <li><code>data:</code> URL script injection <a class="small" href="javascript:toggleExample('script-inject-data')">Example</a>
+                    <table class="exploit" id="script-inject-data">
+                      <tr><th>Example: Wiki allowing editors to specify arbitrary hyperlinks in articles, including <code>data:</code> URLs</th></tr>
+                      <tr><td>&lt;h1>Article&lt;/h1><br/>&lt;p>The original source for this article can be found &lt;a href="<span class="deny">data:text/html,&lt;script>bad_stuff()&lt;/script></span>">here&lt;/a>.</td></tr>
+                    </table>
+                  </li>
+                </ol>
+              </li>
+            </ul>
+          </li>
+          <li><b>XBL bindings must come from <code>chrome:</code> or <code>resource:</code> URIs</b>
+            <ul>
+              <li class="deny">Restricted:
+                <ul>
+                  <li><a href="https://developer.mozilla.org/En/XBL">XBL bindings</a> loaded via any protocol other than <a href="https://developer.mozilla.org/en/Chrome"><code>chrome:</code></a> or <code>resource:</code></li>
+                </ul>
+              </li>
+              <li class="allow">Allowed:
+                <ul>
+                  <li>XBL bindings loaded via the <code>chrome:</code> or <code>resource:</code> protocols</li>
+                </ul>
+              </li>
+              <li>Justification:
+                <ul>
+                  <li>XBL is used to define the properties and behaviors of elements in <a href="https://developer.mozilla.org/en/HTML">HTML</a>, <a href="https://developer.mozilla.org/en/XUL">XUL</a>, and <a href="https://developer.mozilla.org/en/SVG">SVG</a> documents from external files and as such is a vector for script injection.</li>
+                  <li>Requiring that XBL bindings be loaded from either the <code>chrome:</code> or <code>resource:</code> protocol ensures that the bindings are part of a package already installed on a user's system.  This prevents script from arbitrary locations on the Web from being included in a document via <a href="https://developer.mozilla.org/En/CSS">CSS</a>.</li>
+                  <li>Note: this restriction still enables <a href="http://dbaron.org/css/user/">user stylesheets</a> to use XBL, custom <a href="https://addons.mozilla.org/en-US/firefox/">browser add-on</a> <a href="https://developer.mozilla.org/En/XUL/Binding">bindings</a> to be referenced by web content, and <a href="https://developer.mozilla.org/Talk:En/Chrome">chrome</a> UI features to be implemented in XBL, e.g. <code>&lt;video&gt;</code> controls.</li>
+                </ul>
+              </li>
+              <li>Vulnerability types mitigated:
+                <ol>
+                  <li>Stylesheet script injection <a class="small" href="javascript:toggleExample('stylesheet-inject')">Example</a>
+                    <table class="exploit" id="stylesheet-inject">
+                      <tr><th colspan="2">Example: Social networking site allowing users to customize their profile by specifying an external stylesheet</th></tr>
+                      <tr>
+                        <td>User links to external stylesheet</td>
+                        <td>&lt;link rel="stylesheet" type="text/css" href="<span class="deny">http://evil.site/style.css</span>" /><br/>&lt;div id="profile"></td>
+                      </tr>
+                      <tr>
+                        <td>Stylesheet contains XBL binding</td>
+                        <td><pre>#profile {
+  <span class="deny">-moz-binding: url("bindings.xml#evil");</span>
+}</pre></td>
+                      </tr>
+                      <tr>
+                        <td>XBL binding contains malicious code</td>
+                        <td><pre>&lt;?xml version="1.0"?>
+&lt;bindings xmlns="http://www.mozilla.org/xbl"
+          xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  &lt;binding id="<span class="deny">evil</span>">
+    &lt;implementation>
+      &lt;constructor>
+        <span class="deny">bad_stuff();</span>
+      &lt;/constructor>
+    &lt;/implementation>
+  &lt;/binding>
+&lt;/bindings></pre></td>
+                      </tr>
+                    </table>
+                  </li>
+                  <li>Style attribute injection <a class="small" href="javascript:toggleExample('style-attr-inject')">Example</a>
+                    <table class="exploit" id="style-attr-inject">
+                      <tr><th colspan="2">Example: Website fails to escape quotes or other metacharacters in an input control, allowing an attacker to inject a style attribute, e.g.<br/><em>http://example.site/form.cgi?name=<span class="deny">foo&quot; style=&quot;-moz-binding: url('http://evil.site/bindings.xml#evil')</span></em></th></tr>
+                      <tr>
+                        <td style="width:30%">CSS with <code>-moz-binding</code> property is injected into the document</td>
+                        <td>&lt;input type="text" name="name" value="<span class="deny">foo" style="-moz-binding: url('http://evil.site/bindings.xml#evil')</span>" /></td>
+                      </tr>
+                      <tr>
+                        <td>XBL binding contains malicious code</td>
+                        <td><pre>&lt;?xml version="1.0"?>
+&lt;bindings xmlns="http://www.mozilla.org/xbl"
+          xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  &lt;binding id="<span class="deny">evil</span>">
+    &lt;implementation>
+      &lt;constructor>
+        <span class="deny">bad_stuff();</span>
+      &lt;/constructor>
+    &lt;/implementation>
+  &lt;/binding>
+&lt;/bindings></pre></td>
+                      </tr>
+                    </table>
+                  </li>  
+                </ol>
+              </li>
+            </ul>
+          </li>
+          <li><b>Optional <a href="#policy-directives">directives</a>, <code>policy-uri</code> and <code>report-uri</code>, must refer to the same host as the protected document.  Additionally, <code>policy-uri</code> documents must be served with the MIME type <code>text/x-content-security-policy</code> to be valid</b>
+            <ul>
+              <li class="deny">Restricted:
+                <ul>
+                  <li><code>policy-uri</code> directives which refer to a URI on a different host as the protected document, e.g. <br/><code>policy-uri http://other.tld/csp-policy.cgi</code></li>
+                  <li><code>poliy-uri</code> responses served with <a href="">Content-Type</a> other than <code>text/x-content-security-policy</code>, e.g. <br/><code>Content-Type: text/html</code>, or <br/><code>Content-type: image/jpeg</code></li>
+                  <li><code>report-uri</code> directives which refer to a URI on a different host as the protected document, e.g. <br/><code>report-uri http://other.tld/csp-report.cgi</code></li>
+                </ul>
+              </li>
+              <li class="allow">Allowed:
+                <ul>
+                  <li><code>policy-uri</code> directives which refer to a URI on the same host as the protected document, e.g. <br/><code>policy-uri http://same.site/csp-policy.cgi</code>. <br/>The policy document must also be served with the response header, <br/><code>Content-Type: text/x-content-security-policy</code></li>
+                  <li><code>report-uri</code> directives which refer to a URI on the same host as the protected document, e.g. <br/><code>policy-uri http://same.site/csp-report.cgi</code></li>
+                </ul>
+              </li>
+              <li>Justification:
+                <ul>
+                  <li>A site which has not opted-in to using CSP should not be forced into using CSP by an attacker who can inject a <code>policy-uri</code> directive via a CSP header.  Restricting the <code>policy-uri</code> to the same host as the protected document, and requiring it to be served as <code>text/x-content-security-policy</code> ensures the site has positively opted-in to CSP.</li>
+                  <li>The <a href="#report-uri">report</a> sent to the <code>report-uri</code> contains potentially sensitive information, including cookie values and query string parameters.  This information is intended only for the protected site for debugging purposes or similar.  An attacker should not be allowed to steal the report information by injecting a <code>report-uri</code>, along with an arbitrary policy to be violated.</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ol>
+
+        <a name="policy-directives"></a><h2>Policy Directives</h2>
+        <p>There are a total of ten policy areas that web site administrators can define via Content Security Policy.  Meaningful policy sets can be created, however, by defining just a few of these policy areas.  With the exception of the <code>allow</code> section, each policy area is optional and can be defined independently from the other areas.  If Content Security Policy is specified by a web site, <b>the <code>allow</code> section is required</b>.  It is treated as a catch-all for types of content whose policy may or may not be defined.  If an <code>allow</code> section is not specified, then the policy is invalid and an error is raised.  Additional policies can be defined for specific types of content as described below.</p>
+        <p>Content Security Policy is defined on a per-resource basis and can vary according to the sensitivity of a particular resource.  Some <a href="#examples">example policy sets</a> are provided below.</p>
+        <ol>
+          <a name="allow"></a><li><b>allow</b>
+            <ul>
+              <li><code>allow</code> is the catch-all section that defines the security policy for all types of content which are not called out in any of the more specific directives</li>
+              <li>It is <b>required</b> to be defined for any resource which utilizes Content Security Policy</li>
+            </ul>
+          </li>
+          <a name="options"></a><li><b>options</b>
+            <ul>
+              <li>Options for modifying the core restrictions of CSP</li>
+              <li><code>inline-script</code> enables inline script and <code>javascript:</code> URIs</li>
+              <li><code>eval-script</code> enables the parsing of strings into code via <code>eval()</code> and similar functions</li>
+            </ul>
+          </li>
+          <a name="img-src"></a><li><b>img-src</b>
+            <ul>
+              <li>Indicates which sources are valid for images and favicons</li>
+              <li>Images from non-white-listed sources will not be requested or loaded</li>
+            </ul>
+          </li>
+          <a name="media-src"></a><li><b>media-src</b>
+            <ul>
+              <li>Indicates which sources are valid for &lt;audio&gt; and &lt;video&gt;</li>
+              <li>&lt;audio&gt; and &lt;video&gt; from non-white-listed sources will not be requested or loaded</li>
+            </ul>
+          </li>
+          <a name="script-src"></a><li><b>script-src</b>
+            <ul>
+              <li>Indicates valid sources of JavaScript</li>
+              <li>Script from non-white-listed sources will not be requested or executed</li>
+            </ul>
+          </li>
+          <a name="object-src"></a><li><b>object-src</b>
+            <ul>
+              <li>Indicates valid sources for &lt;object&gt;, &lt;embed&gt;, and &lt;applet&gt; elements</li>
+              <li>Objects from non-white-listed sources will not be requested or loaded</li>
+            </ul>
+          </li>
+          <a name="frame-src"></a><li><b>frame-src</b>
+            <ul>
+              <li>Indicates which sources are valid for &lt;frame&gt; and &lt;iframe&gt; elements</li>
+              <li>"Which documents may be embedded within my site?"</li>
+              <li>Frame content from non-white-listed sources will not be requested or loaded</li>
+            </ul>
+          </li>
+          <a name="font-src"></a><li><b>font-src</b>
+            <ul>
+              <li>Indicates which sources are valid for <code>@font-face</code> loads</li>
+              <li>Downloadable fonts from non-white-listed sources will not be requested or loaded</li>
+            </ul>
+          </li>
+          <a name="xhr-src"></a><li><b>xhr-src</b>
+            <ul>
+              <li>Indicates which sources are valid for <code>XMLHttpRequest</code> connections</li>
+              <li><code>XMLHttpRequest</code>s may not be opened to non-white-listed sources</li>
+            </ul>
+          </li>
+          <a name="frame-ancestors"></a><li><b>frame-ancestors</b>
+            <ul>
+              <li>Indicates which sources are valid for &lt;frame&gt; and &lt;iframe&gt; elements</li>
+              <li>"Which sites may embed content from my site?"</li>
+              <li>All sites within the frame chain must be in the <code>frame-ancestors</code> list in order for the load to be permitted.
+                <ul>
+                  <li>If SiteA embeds SiteB which embeds SiteC, then both SiteA and SiteB must be approved by SiteC before SiteC will be loaded in SiteB's &lt;frame&gt; or &lt;iframe&gt;.</li>
+                </ul>
+              </li>
+              <li>Note that this directive addresses the <a href="http://jeremiahgrossman.blogspot.com/2008/10/clickjacking-web-pages-can-see-and-hear.html">clickjacking</a> threat, but not <a href="http://www.cgisecurity.com/articles/csrf-faq.shtml">CSRF</a>
+                <ul>
+                  <li>Using <code>frame-ancestors</code>, it is possible to prevent a resource from being framed within a malicious webpage.  The browser will stop loading the protected document as soon as its <code>frame-ancestors</code> policy is received and a policy violation is determined.</li>
+                  <li>However, this directive <b>does not prevent the request for the document from being sent</b> to the framed document's server, as policy directives are received by the browser in the server's response.  To mitigate Cross-Site Request Forgery, the <a href="https://wiki.mozilla.org/Security/Origin"><code>Origin header</code></a> provides a more robust mechanism.</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <a name="style-src"></a><li><b>style-src</b>
+            <ul>
+              <li>Indicates valid sources for stylesheets
+                <ul>
+                  <li>This includes externally linked stylesheets, as well as inline <code>&lt;style></code> elements and <code>style</code> attributes of HTML elements within the protected document</li>
+                </ul>
+              </li>
+              <li>Stylesheets from non-white-listed sources will not be requested or loaded</li>
+            </ul>
+          </li>
+          <a name="report-uri"></a><li><b>report-uri</b>
+            <ul>
+              <li>Instructs the browser where to send a report when Content Security Policy is violated</li>
+              <li>The report will be a JSON document sent via POST to the specified URI containing the following:
+                <ul>
+                  <li><code>request</code> - HTTP request line which led to the policy violation (method, resource path, HTTP version)</li>
+                  <li><code>request-headers</code> - HTTP headers sent which led to the policy violation</li>
+                  <li><code>blocked-uri</code> - URI of the resource that was blocked from loading</li>
+                  <li><code>violated-directive</code> - The policy section that was violated (e.g., <code>"script-src *.mozilla.org"</code>)</li>
+                  <li><code>original-policy</code> - The original policy as served in the X-Content-Security-Policy header</li>
+                </ul>
+              </li>
+              <li>Sample report:<pre>{
+  "csp-report":
+    {
+      "request": "GET http://index.html HTTP/1.1",
+      "request-headers": "Host: example.com                                                        
+                          User-Agent: Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.5; en-US; rv:1.9.3a5pre)
+                          Gecko/20100601 Minefield/3.7a5pre
+                          Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8  
+                          Accept-Language: en-us,en;q=0.5                                          
+                          Accept-Encoding: gzip,deflate                                            
+                          Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7                           
+                          Keep-Alive: 115                                                          
+                          Connection: keep-alive",
+      "blocked-uri": "http://evil.com/some_image.png",
+      "violated-directive": "img-src 'self'",
+      "original-policy": "allow 'none'; img-src *, allow 'self'; img-src 'self'"
+    }
+}
+</pre>
+              </li>
+            </ul>
+          </li>
+          <a name="policy-uri"></a><li><b>policy-uri</b>
+            <ul>
+              <li>Indicates the location of a file containing the security policies for the resource</li>
+              <li>The <code>policy-uri</code> must point to the same host that the protected document resides on, and the file must be served with <br/><code>Content-Type: text/x-content-security-policy</code></li>
+              <li>If a valid <code>policy-uri</code> is specified, any policy defined in the HTTP header will be ignored</li>
+              <li>A Content Security Policy set including <code>policy-uri</code> is only valid if <code>policy-uri</code> is the only directive present.  Otherwise, an exception is raised and CSP is disabled.</li>
+            </ul>
+          </li>
+        </ol>
+
+        <a name="content-sources"></a><h2>Content Sources</h2>
+        <p>Content Sources are the fundamental basis for how Content Security Policies are defined.  A policy set combines <a href="#policy-directives">Policy Directives</a> with a list of Content Sources to define the locations from which different types of content may be loaded.  A valid Content Source takes one of two forms:</p>
+        <ol>
+          <li>Host Expression
+            <ul>
+              <li>Describes an Internet host </li>
+              <li>Consists of:
+                <ul>
+                  <li>(Optional) Scheme, e.g. <code>http://</code>, <code>ftp://</code></li>
+                  <li>Hostname, including an optional leading wildcard, e.g. <code>*.mozilla.org</code>
+                    <ul>
+                      <li>The wildcard character must be used in the most specific (left most) part of the hostname and may match any number of subdomain labels.</li>
+                    </ul>
+                  </li>
+                  <li>(Optional) Port number, which is separated from the hostname with a colon, e.g. <code>mozilla.com:443</code></li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li>Keyword
+            <ul>
+              <li>Represents a special class of Content Sources
+                <ol>
+                  <li><b><code>'self'</code></b> - refers to the host the protected document is served from, including the same scheme and port (note: single quotes required)</li>
+                  <li><b><code>'none'</code></b> - refers to the empty set (no hosts are valid, note: single quotes required)</li>
+                </ol>
+              </li>
+            </ul>
+          </li>
+          <li>Data
+            <ul>
+              <li><b><code>data:</code></b> - permits <code>data:</code> URIs to be valid content sources, e.g. <code>img-src data:</code></li>
+            </ul>
+          </li>
+        </ol>
+        <p>Further detailed information on Content Sources can be found within the <a href="https://wiki.mozilla.org/Security/CSP/Spec#Formal_Policy_Syntax">Formal Policy Syntax</a> section of the specification document.</p>
+
+        <a name="examples"></a><h2>Example Use Cases</h2>
+        <ol>
+          <li>Site wants all content to come from its own domain:
+            <ul>
+              <li><code>X-Content-Security-Policy: allow 'self'</code></li>
+            </ul>
+          </li>
+          <li style="margin:1em 0">Auction site wants to allow images from anywhere, plugin content from a list of trusted media providers, and scripts only from its server hosting sanitized JavaScript:
+            <ul>
+              <li><code>X-Content-Security-Policy: allow 'self'; img-src *; object-src media1.com media2.com; script-src userscripts.example.com</code></li>
+            </ul>
+          </li>
+          <li style="margin:1em 0">Online payments site wants to ensure that all of the content in its pages is loaded over SSL to prevent attackers from eavesdropping on requests for insecure content
+            <ul>
+              <li><code>X-Content-Security-Policy: allow https://payments.example.com</code></li>
+            </ul>
+          </li>
+        </ol>
+        <h2>The <code>Origin</code> Header</h2>
+        <p>The initial Content Security Policy proposal included a <a href="details-0.1.html#request-source">policy directive</a> that could be used to mitigate CSRF vulnerabilities by governing which sites could initiate HTTP requests for a CSP-protected resource.  This model was similar to the current <a href="http://www.w3.org/TR/2009/WD-cors-20090317/">Cross-Origin Resource Sharing</a> mechanism being developed by W3C.</p>
+        <p>That particular directive has been removed from Content Security Policy.  An alternative CSRF mitigation mechanism is provided by the <a href="origin-header.proposal.html"><code>Origin</code> header</a>.</p>
+        <h2>Conclusions</h2>
+        <p>Content Security Policy provides a way to greatly reduce or altogether eliminate a website's attack surface for Cross-Site Scripting.  With proper Content Security Policy in place, a successful XSS attack will be orders of magnitude more difficult, requiring the attacker control the contents of white-listed script source files.  No longer will XSS attacks which rely on echoing script into page contents be effective.  Further, if a site knows it never wants to have JavaScript executing in its pages, it can simply globally disable JavaScript and not have to worry about script injection attacks against its users with supporting browsers.</p>
+        <p>While part of Content Security Policy, the <code>Origin</code> header provides a simple way for a website to mitigate Cross-Site Request Forgery against its sensitive resources.  The <code>Origin</code> header provides the information a server needs to validate its requests while avoiding the privacy concerns which were chief among the criticisms of <code>Referer</code>.</p>
+        <p>As seen in every aspect of Computer Security, the protection of a system is best achieved through a variety of overlapping controls.  Content Security Policy aims to be one part of a larger defense-in-depth application security strategy, or as our colleague <a href="http://www.gerv.net/">Gerv</a> likes to say, "belt-and-braces".  Web administrators, while maintaining their normal security auditing and remediation process, will embrace the opportunity to mitigate broad classes of web app vulnerabilities, for those users with compliant browsers, by defining a few simple rules.</p>
+        <p class="center"><a href="index.html">Overview</a> | <a class="current" href="details.html">Details</a> | <a href="https://dvcs.w3.org/hg/content-security-policy/raw-file/tip/csp-specification.dev.html">Spec</a> | <a href="download.html">Download</a> | <a href="demo.php">Demo</a> | <a href="wordpress.html">WordPress</a> | <a href="origin-header-proposal.html">Origin Header</a> | <a href="discussion.html">Discussion</a></p>
+      </div>
+    </div><!-- end main -->
+    <div id="footer"><a href="http://www.mozilla.com/firefox"><img src="images/FF.png" alt="Get Firefox" style="border:0;margin:.25em"/></a><br><small><a href="http://people.mozilla.org/~bsterne">bsterne 2011</a></small></div>
+  </div>
+</div>
+</body>
+</html>

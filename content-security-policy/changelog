@@ -1,0 +1,240 @@
+Index: details.html
+===================================================================
+--- details.html	(revision 13)
++++ details.html	(working copy)
+@@ -10,6 +10,7 @@
+     <div id="hnav"><ul><li><a href="index.html">Overview</a></li><li><a class="current" href="details.html">Details</a></li><li><a href="download.html">Download</a></li><li><a href="demo.cgi">Demo</a></li><li><a href="discussion.html">Discussion</a></li></ul></div>
+     <div id="main">
+       <div id="mainWrapper">
++        <p class="center small"><a href="changelog">Version</a>: <a href="details-0.1.html">0.1</a> | 0.2 (cur)</p>
+         <div class="highlight">
+           <p>Please note this is <b>not a specification document</b>.  This is one proposal for the syntax and delivery for Site Security Policy.  <a href="discussion.html">Discussion is open</a> to all interested parties.  We hope that a working spec which can be implemented by all browsers is one of the byproducts of this discussion.</p>
+           <p class="nomargin">Also, it seems appropriate to acknowledge <a href="http://ha.ckers.org/blog/20070811/content-restrictions-a-call-for-input/">RSnake</a> and <a href="http://www.gerv.net/security/content-restrictions/">Gerv</a> who originated this idea.  <a href="http://jeremiahgrossman.blogspot.com/">Jeremiah Grossman</a> has also been extremely helpful in advancing it.</p>
+@@ -28,6 +29,7 @@
+           <li><b>Request-Source</b>
+             <ul>
+               <li>Request-Source instructions sent by the server indicate a (potentially empty) set of domains whose content should be allowed to request the resource.</li>
++              <li>Only requests made via non-<a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.1.1">safe HTTP methods</a> can be restricted.  Requests made via GET and HEAD can be issued across domains without restrictions by Site Security Policy.  Note that many aspects of the Web, most notably hyperlinks, create cross-site GET requests on a frequent basis.  Site authors who wish to utilize Site Security Policy are encouraged to follow the W3C's guidance on minimizing side-effects produced by these requests.</li>
+               <li>In the absence of any Request-Source instructions, content from all sites will be allowed to initiate requests to the corresponding resource.  Note that this keeps the prevention of CSRF primarily as <em>the responsibility of the server</em> receiving the cross-site requests.  A supporting browser will make the preemptive policy check before sending content-initiated cross-site requests, but those requests will only be blocked if a Request-Source deny rule matching the requesting domain is returned.</li>
+               <a name="non-safe"></a><li>A policy query will be made by the browser before a cross-site request is initiated by page content.  Requests made via non-<a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.1.1">safe HTTP methods</a> will not be sent if they violate a site's security policy.</li>
+               <li>These instructions take precedence over any Request-Target instructions which are defined below.</li>
+@@ -57,12 +59,14 @@
+           <li><b>Script-Source</b>
+             <ul>
+               <li>A valid Script-Source instruction contains one or more pairs of the form <em>("allow or deny", "host item")</em>.</li>
++              <li>Any deny rule for a host will take precedence over all allow rules for the host within a set of policies for a particular resource.</li>
+               <li>Example: <code>X-SSP-Script-Source: allow *.example.com; deny public.example.com</code></li>
+             </ul>
+           </li>
+           <li><b>Request-Source</b>
+             <ul>
+               <li>Request-Source instructions are sent in response to policy queries made by the browser before allowing page content to make a cross-site request.  The <em>policy query</em> sent by the browser is a HEAD request to the cross-site resource containing the HTTP header <code>Policy-Query:</code>.  The  policy instructions sent by the server in response to this query consist of one or more triplets of the form <em>("allow or deny", "host item", "list of HTTP methods")</em> and an optional <em>expires</em> attribute specifying the number of seconds to cache the policy.  The following are examples of valid Request-Source instructions:</li>
++              <li>For any host and HTTP method combination, a deny rule will take precedence over all rules allowing the same access for a particular resource.</li>
+               <li><code>X-SSP-Request-Source: deny * post; allow * get; expires 60</code></li>
+               <li><code>X-SSP-Request-Source: allow *.example.com post,get; deny public.example.com *; expires 3600</code></li>
+             </ul>
+@@ -70,6 +74,7 @@
+           <li><b>Request-Target</b>
+             <ul>
+               <li>A valid Request-Target instruction contains one or more triplets of the form <em>("allow or deny", "host item", "list of HTTP methods")</em>.</li>
++              <li>For any host and HTTP method combination, a deny rule will take precedence over all rules allowing the same access for a particular resource.</li>
+               <li>Example: <code>X-SSP-Request-Target: allow *.example.com *, deny public.example.com post</code></li>
+             </ul>
+           </li>
+Index: details.html
+===================================================================
+--- details.html	(revision 17)
++++ details.html	(revision 18)
+@@ -7,92 +7,143 @@
+ <div id="outer">
+   <div id="inner">
+     <div id="header"><div id="headerWrap"><h1>Content Security Policy Details</h1></div></div>
+-    <div id="hnav"><ul><li><a href="index.html">Overview</a></li><li><a class="current" href="details.html">Details</a></li><li><a href="download.html">Download</a></li><li><a href="demo.cgi">Demo</a></li><li><a href="discussion.html">Discussion</a></li></ul></div>
++    <div id="hnav"><ul><li><a href="index.html">Overview</a></li><li><a class="current" href="details.html">Details</a></li><li><a href="download.html">Download</a></li><li><a href="demo.cgi">Demo</a></li><li><a href="origin-header-proposal.html">Origin Header</a></li><li><a href="discussion.html">Discussion</a></li></ul></div>
+     <div id="main">
+       <div id="mainWrapper">
+         <p class="center small"><a href="changelog">Version</a>: <a href="details-0.1.html">0.1</a> | <a href="details-0.2.html">0.2</a> | 1.0 (cur)</p>
+         <div class="highlight">
+           <p>Please note this is <b>not a specification document</b>.  This is one proposal for the syntax and delivery for Content Security Policy.  <a href="discussion.html">Discussion is open</a> to all interested parties.  We hope that a working spec which can be implemented by all browsers is one of the byproducts of this discussion.</p>
+-          <p class="nomargin">Also, it seems appropriate to acknowledge <a href="http://ha.ckers.org/blog/20070811/content-restrictions-a-call-for-input/">RSnake</a> and <a href="http://www.gerv.net/security/content-restrictions/">Gerv</a> who originated this idea.  <a href="http://jeremiahgrossman.blogspot.com/">Jeremiah Grossman</a> has also been extremely helpful in advancing it.</p>
++          <p class="nomargin">Also, it seems appropriate to acknowledge <a href="http://ha.ckers.org/blog/20070811/content-restrictions-a-call-for-input/">RSnake</a> and <a href="http://www.gerv.net/security/content-restrictions/">Gerv</a> who originated this idea.  <a href="http://jeremiahgrossman.blogspot.com/">Jeremiah Grossman</a>, <a href="http://www.collinjackson.com">Collin Jackson</a>, and <a href="http://www.adambarth.com">Adam Barth</a> have also been extremely helpful in advancing it.</p>
+         </div>
+         <h2>Policy Focus</h2>
+-        <p>We identify four security policy areas that website administrators can choose to define.  Each area is optional and can be defined independently from the other areas.  Security policy can be defined on a per-resource basis and can vary according to the sensitivity of a particular resource.  Additionally, a reporting server can be specified as part of a server's security policy which tells the browser where to send reports when JavaScript or a cross-site request was blocked per some security policy.  This has the added benefit of showing a website admin which pages within their site are being actively attacked or are potentially misconfigured.</p>
++        <p>There are a total of seven policy areas that website administrators can define via Content Security Policy.  Meaningful policy sets can be created, however, by defining just a few of these policy areas.  With the exception of the <code>allow</code> section, each policy area is optional and can be defined independently from the other areas.  If Content Security Policy is specified by a web site, <b>the <code>allow</code> section is required</b>.  It is treated as a catch-all for types of content whose policy may or may not be defined.  <b>If an <code>allow</code> section is not specified, then <code>allow none</code> is implied</b>.  Policies can be defined for more specific types of content including: images, scripts, objects, frames and iframes.</p>
++        <p>Security policy is defined on a per-resource basis and can vary according to the sensitivity of a particular resource.  Some <a href="#examples">example policy sets</a> are provided below.</p>
+         <ol>
+-          <li><a name="script-source"></a><b>Script-Source</b>
++          <li><b>allow</b>
+             <ul>
+-              <li>Script-Source instructions returned by the server indicate a (potentially empty) set of domains that should be treated as valid sources of JavaScript for the page.</li>
+-              <li>When any Script-Source instruction is received by the browser <em>script enforcement mode</em> is enabled and only white-listed hosts will be treated as valid sources of script for the page.  Any script embedded within the page and any script included from non-white-listed hosts will not be executed.</li>
+-              <li>In the absence of any Script-Source instructions, all JavaScript for a particular resource including embedded, inline, and external will be treated as valid and executed by the browser as normal.</li>
+-              <li>Script-Source instructions are sent as HTTP response headers and are used by the browser to determine the JavaScript behavior for the corresponding page.  Note the difference between this model and the model used by Request-Source instructions below.</li>
++              <li><code>allow</code> is the catch-all section that defines the security policy for all types of content which are not called out in any of the specific policy areas below</li>
++              <li>It is <b>required</b> to be defined for any resource which utilizes Content Security Policy
++                <ul>
++                  <li>If Content Security Policy is enabled but <code>allow</code> is not defined, then <code>allow none</code> is implied</li>
++                </ul>
++              </li>
+             </ul>
+           </li>
+-          <li><b>Request-Source</b>
++          <li><b>img-src</b>
+             <ul>
+-              <li>Request-Source instructions sent by the server indicate a (potentially empty) set of domains whose content should be allowed to request the resource.</li>
+-              <a name="non-safe"></a><li>A policy query will be made by the browser before a cross-site request is initiated by page content.</li>
+-              <li>Only requests made via non-<a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.1.1">safe HTTP methods</a> can be restricted.  Requests made via GET and HEAD can be issued across domains without restrictions by Content Security Policy.  Note that many aspects of the Web, most notably hyperlinks, create cross-site GET requests on a frequent basis.  Site authors who wish to utilize Content Security Policy are encouraged to follow the W3C's guidance on minimizing side-effects produced by these requests.</li>
+-              <li>In the absence of any Request-Source instructions, content from all sites will be allowed to initiate requests to the corresponding resource.  Note that this keeps the prevention of CSRF primarily as <em>the responsibility of the server</em> receiving the cross-site requests.  A supporting browser will make the preemptive policy check before sending content-initiated cross-site requests, but those requests will only be blocked if a Request-Source deny rule matching the requesting domain is returned.</li>
+-              <li>These instructions take precedence over any Request-Target instructions which are defined below.</li>
+-              <li>Security policy for a particular resource can be cached for some period of time per the server's instructions.  The policy cache will expire at the end of the browser session.</li>
++              <li>Indicates which hosts are valid sources for images</li>
++              <li>Images from non-white-listed hosts will not be requested or loaded</li>
+             </ul>
+           </li>
+-          <li><b>Request-Target</b>
++          <li><a name="script-source"></a><b>script-src</b>
+             <ul>
+-              <li>Request-Target instructions returned by the server indicate a (potentially empty) set of hosts which should be white-listed by the browser as valid targets for cross-site requests initiated by the page's content.</li>
+-              <li>Request-Target instructions provide a way to prevent page content from making outbound communication to other sites.  This prevents data from being exfiltrated from the site as well as preventing additional non-intended resources from being included in the page.</li>
+-              <li>Request-Target instructions can also be used to restrict a website from being used as a platform to attack other websites via CSRF.  These may be particularly useful for sites that permit users to post HTML and JavaScript in publicly accessible areas.</li>
+-              <li>Security policy for a particular resource can be cached for some period of time per the server's instructions.  The policy cache will expire at the end of the browser session.</li>
++              <li>Indicates which hosts are valid sources for JavaScript</li>
++              <li>Scripts from non-white-listed hosts will not be requested or executed</li>
++              <li>If Content Security Policy is set for a resource, <b>only script loaded from white-listed hosts will execute</b>
++                <ul>
++                  <li>Inline script (contents of &lt;script&gt; nodes) is disabled</li>
++                  <li>Script called using event-handling attributes is not executed</li>
++                </ul>
++              </li>
++              <li>In summary, all valid scripts will be placed in external script files and served from white-listed hosts</li>
+             </ul>
+           </li>
+-          <li><b>Report-URI</b>
++          <li><b>object-src</b>
+             <ul>
+-              <li>The Report-URI instruction tells the browser where to send reports when Content Security Policy prevents JavaScript from executing or page content from initiating a cross-site request.</li>
+-              <li>A report will consist of a POST made to the specified URI containing as the POST body the full HTTP request which led to the policy violation.</li>
+-              <li>For a page resulting in multiple policy violations, the browser will not send duplicate reports for a single page view.</li>
+-              <li>This policy is not cached and will be expired immediately by the browser.  Note that the server will need to send a Report-URI instruction explicitly with each page for which it wants policy violation feedback.</li>
++              <li>Indicates which hosts are valid sources for &lt;object&gt;, &lt;embed&gt;, and &lt;applet&gt; elements</li>
++              <li>Objects from non-white-listed hosts will not be requested or loaded</li>
+             </ul>
+           </li>
+-        </ol>
+-        <h2>Syntax and Delivery</h2>
+-        <p>Content Security Policy is delivered to the browser via custom HTTP headers.  As indicated above, these policy headers will fall into two general groups.  The first group consists of <b>direct</b> or <b>inline policy</b>, intended by the server to be applied as processing instructions for the attached content.  The second group consists of <b>third-party policy</b> which is sent in response to specific policy queries.  In these cases the server provides information which allows the client to decide whether or not to allow a content-initiated request to another site.  A similar model is described in the W3's <a href="http://www.w3.org/TR/access-control/">Access Control</a> specification.  Much of the policy described below makes reference to <b>host items</b> since Content Security Policy applies levels of privilege to page content based on its originating host.  A host item is a domain string which may contain wildcards (*) which is explicitly allowed or denied in each instruction.  Internationalized domain names are specified according to their <a href="http://tools.ietf.org/html/rfc3492">punycode representations</a>.  Returned resources may contain one or more policy instructions defined.  The instructions can be combined into one set and any conflict within a set of instructions will be resolved by following the more restrictive policy.</p>
+-        <ol>
+-          <li><b>Script-Source</b>
++          <li><b>frame-src</b>
+             <ul>
+-              <li>A valid Script-Source instruction contains one or more pairs of the form <em>("allow or deny", "host item")</em>.</li>
+-              <li>Any deny rule for a host will take precedence over all allow rules for the host within a set of policies for a particular resource.</li>
+-              <li>Example: <code>X-SSP-Script-Source: allow *.example.com; deny public.example.com</code></li>
++              <li>Indicates which hosts are valid sources for &lt;frame&gt; and &lt;iframe&gt; elements</li>
++              <li>Frame content from non-white-listed hosts will not be requested or loaded</li>
+             </ul>
+           </li>
+-          <li><b>Request-Source</b>
++          <li><b>report-uri</b>
+             <ul>
+-              <a name="policy-query"></a><li>Request-Source instructions are sent in response to policy queries made by the browser before allowing page content to make a cross-site request.  The <em>policy query</em> sent by the browser is a HEAD request to the cross-site resource containing the HTTP header <code>Policy-Query:</code>.  The  policy instructions sent by the server in response to this query consist of one or more triplets of the form <em>("allow or deny", "host item", "list of HTTP methods")</em> and an optional <em>expires</em> attribute specifying the number of seconds to cache the policy.  The following are examples of valid Request-Source instructions:</li>
+-              <li>For any host and HTTP method combination, a deny rule will take precedence over all rules allowing the same access for a particular resource.</li>
+-              <li><code>X-SSP-Request-Source: deny * post; allow * get; expires 60</code></li>
+-              <li><code>X-SSP-Request-Source: allow *.example.com post,get; deny public.example.com *; expires 3600</code></li>
++              <li>Instructs the browser where to send a report when Content Security Policy is violated</li>
++              <li>The report will be a XML document sent via POST to the specified URI containing the following:
++                <ul>
++                  <li><code>request</code> - HTTP request line which led to the policy violation (method, resource path, HTTP version)</li>
++                  <li><code>headers</code> - HTTP headers sent which led to the policy violation</li>
++                  <li><code>blocked</code> - URI of the resource that was blocked from loading</li>
++                </ul>
++              </li>
++              <li>Sample report:<pre>&lt;csp-report>
++  &lt;request>GET /index.html HTTP/1.1&lt;/request>
++  &lt;headers>Host: example.com
++           User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008061015 Firefox/3.0
++           Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
++  &lt;/headers>
++  &lt;blocked>http://evil.com/some_image.png&lt;/blocked>
++&lt;/csp-report></pre>
++              </li>
+             </ul>
+           </li>
+-          <li><b>Request-Target</b>
++            <li><b>policy-uri</b>
+             <ul>
+-              <li>A valid Request-Target instruction contains one or more triplets of the form <em>("allow or deny", "host item", "list of HTTP methods")</em>.</li>
+-              <li>For any host and HTTP method combination, a deny rule will take precedence over all rules allowing the same access for a particular resource.</li>
+-              <li>Example: <code>X-SSP-Request-Target: allow *.example.com *, deny public.example.com post</code></li>
++              <li>Indicates the location of a file containing the security policies for the resource</li>
++              <li>The <code>policy-uri</code> must point to the same host as the resource for which it defines policy</b></li>
++              <li>If a valid <code>policy-uri</code> is specified, any policy defined in the HTTP header will be ignored</li>
+             </ul>
+           </li>
+-          <li><b>Report-URI</b>
++        </ol>
++        <h2>Syntax and Delivery</h2>
++        <p>Content Security Policy is delivered to the browser in one of two ways: a custom HTTP header or a file served from the same host as the resource to be secured.  If a <code>policy-uri</code> is specified then the policy defined in that file will take precedence over any policy defined in the HTTP header.  The syntax is identical between file-based and header-based policy.  The contents of a policy file are equivalent to the value of the <code>X-Content-Security-Policy</code> header.  Authors who are unable to support signaling via HTTP headers can use <code>&lt;meta&gt;</code> tags with <code>http-equiv="X-Content-Security-Policy"</code> to define their policies.  HTTP header-based policy will take precedence over <code>&lt;meta&gt;</code> tag-based policy if both are present.</p>
++        <p>Much of the policy described below makes reference to <b>host items</b> since Content Security Policy applies levels of privilege to content based on its originating host.  A host item is a domain string which may contain wildcards (*) which is explicitly allowed to be a source of content for a particular resource.  Internationalized domain names are specified according to their <a href="http://tools.ietf.org/html/rfc3492">punycode representations</a>.  Sets of security policies may contain both general (e.g. <code>allow</code>) and specific (e.g. <code>script-src</code>) instructions that could apply to the same content.  In these cases, policy from the more specific instruction will be enforced.</p>
++        <p>Content Security Policy supports the following three keywords to be used as host items:</p>
++        <ul>
++          <li><b>self</b>: refers to the host that the resource is served from</li>
++          <li><b>none</b>: indicates the empty set</li>
++          <li><b>data</b>: indicates <code>data:</code> URLs are a valid source of content</li>
++        </ul>
++        <p>Content Security Policy will be specified according to the following format:</p>
++        <ul>
++          <li>Policy sections are delimited by semi-colon (;)</li>
++          <li>Each policy section will consist of a <b>policy section identifier</b> followed by:
++            <ol>
++              <li>a whitespace-delimited list of host items or</li>
++              <li>a single URI</li>
++            </ol>
++          </li>
++          <li>Valid policy section identifiers include:
++            <ol>
++              <li>allow</li>
++              <li>img-src</li>
++              <li>script-src</li>
++              <li>object-src</li>
++              <li>frame-src</li>
++              <li>report-uri</li>
++              <li>policy-uri</li>
++            </ol>
++          </li>
++        </ul>
++        <a name="examples"></a><h2>Example Use Cases</h2>
++        <ol>
++          <li>Site wants all content to come from its own domain:
+             <ul>
+-              <li>A report URI instruction contains the URI to which the browser should POST the full request which resulted in the policy violation.</li>
+-              <li>Example: <code>X-SSP-Report-URI: http://www.example.com/policy.cgi</code></li>
++              <li><code>X-Content-Security-Policy: allow self</code></li>
++              <li><code>&lt;meta http-equiv="X-Content-Security-Policy" content="allow self" /&gt;</code></li>
+             </ul>
+           </li>
++          <li style="margin:1em 0">Auction site wants to allow images from anywhere, plugin content from a list of trusted media providers, and scripts only from its server hosting sanitized JavaScript:
++            <ul>
++              <li><code>X-Content-Security-Policy: allow self; img-src *; object-src media1.com media2.com; script-src userscripts.example.com</code></li>
++              <li><code>&lt;meta http-equiv="X-Content-Security-Policy" content="allow self; img-src *; object-src media1.com media2.com; script-src userscripts.example.com" /&gt;</code></li>
++            </ul>
++          </li>
+         </ol>
++        <h2>The <code>Origin</code> Header</h2>
++        <p>Since Cross Site Request Forgery has been removed from the scope of Content Security Policy, we now propose that the <a href="origin-header-proposal.html"><code>Origin</code> header</a> be implemented to address CSRF.</p>
+         <h2>Conclusions</h2>
+-        <p>Content Security Policy provides a way to greatly reduce or altogether eliminate a website's attack surface for Cross-Site Scripting.  With proper Content Security Policy in place, a successful XSS attack will require the attacker to have control over the contents of white-listed script source files.  No longer will XSS attacks which rely on echoing script into page contents be effective.  Further, if a site knows it never want to have JavaScript executing in its pages, it can simply globally disable JavaScript and not have to worry about script injection attacks against its users with supporting browsers.</p>
+-        <p>Content Security Policy also provides a simple way for a website to prevent Cross-Site Request Forgery against its sensitive resources.  A comprehensive CSRF protection mechanism, such as form token checking, can be complicated to implement and difficult to integrate into an existing web application.  Such a mechanism may even be subject to its own security bugs.  Even a properly implemented CSRF-protection-token system will not stand up in an environment with XSS bugs.  Web sites facing these challenges can utilize Content Security Policy to harden themselves against attack and achieve a higher level of confidence in the security of their systems with an added layer of security.  Websites will be able to fully control who can request resources from outside the site and what remote locations should be reachable by content from within the site.</p>
++        <p>Content Security Policy provides a way to greatly reduce or altogether eliminate a website's attack surface for Cross-Site Scripting.  With proper Content Security Policy in place, a successful XSS attack will require the attacker to have control over the contents of white-listed script source files.  No longer will XSS attacks which rely on echoing script into page contents be effective.  Further, if a site knows it never wants to have JavaScript executing in its pages, it can simply globally disable JavaScript and not have to worry about script injection attacks against its users with supporting browsers.</p>
++        <p>The <code>Origin</code> header provides a simple way for a website to mitigate Cross-Site Request Forgery against its sensitive resources.  The <code>Origin</code> header provides the information a server needs to validate its requests while avoiding the privacy concerns which were chief among the criticisms of <code>Referer</code>.</p>
+         <p>As seen in every aspect of Computer Security, the protection of a system is best achieved through a variety of overlapping controls.  Content Security Policy aims to be one part of a larger defense-in-depth application security strategy, or as our colleague <a href="http://www.gerv.net/">Gerv</a> likes to say, "belt-and-braces".  Web administrators, while maintaining their normal security auditing and remediation process, will embrace the opportunity to mitigate broad classes of web app vulnerabilities, for those users with compliant browsers, by defining a few simple rules.</p>
+-        <p class="center"><a href="index.html">Overview</a> | <a class="current" href="details.html">Details</a> | <a href="download.html">Download</a> | <a href="demo.cgi">Demo</a> | <a href="discussion.html">Discussion</a></p>
++        <p class="center"><a href="index.html">Overview</a> | <a class="current" href="details.html">Details</a> | <a href="download.html">Download</a> | <a href="demo.cgi">Demo</a> | <a href="origin-header-proposal.html">Origin Header</a> | <a href="discussion.html">Discussion</a></p>
+       </div>
+     </div><!-- end main -->
+-    <div id="footer"><b><a href="http://www.mozilla.com/firefox">Get Firefox</a></b></div>
++    <div id="footer"><a href="http://www.mozilla.com/firefox"><img src="images/FF3.gif" alt="Get Firefox 3" style="border:0;margin:.25em"/></a><br><small><a href="http://people.mozilla.org/~bsterne">bsterne 2008</a></small></div>
+   </div>
+ </div>
+ </body>

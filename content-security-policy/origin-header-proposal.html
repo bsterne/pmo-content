@@ -1,0 +1,53 @@
+<html>
+<head>
+<link rel="stylesheet" href="style/style.css" type="text/css" />
+<title>Origin Header Proposal</title>
+</head>
+<body>
+<div id="outer">
+  <div id="inner">
+    <div id="header"><div id="headerWrap"><h1><code>Origin</code> Header Proposal</h1></div></div>
+    <div id="hnav"><ul><li><a href="index.html">Overview</a></li><li><a href="details.html">Details</a></li><li><a href="https://dvcs.w3.org/hg/content-security-policy/raw-file/tip/csp-specification.dev.html">Spec</a></li><li><a href="download.html">Download</a></li><li><a href="demo.php">Demo</a></li><li><a href="wordpress.html">WordPress</a></li><li><a class="current" href="origin-header-proposal.html">Origin Header</a></li><li><a href="discussion.html">Discussion</a></li></ul></div>
+    <div id="main">
+      <div id="mainWrapper">
+        <div class="warning">
+          <p><b>Warning</b>: This site documents the original and <b>out-of-date</b> Mozilla proposal for Content Security Policy.</p>
+          <p>The current and official Content Security Policy specification is undergoing standardization at the <a href="http://www.w3.org/2011/webappsec/">W3C Web Application Security Working Group</a> and the latest revision of the specification can be found here:</p>
+          <p class="center"><b><a href="https://dvcs.w3.org/hg/content-security-policy/raw-file/tip/csp-specification.dev.html">CSP Specification</a></b></p>
+        </div>
+        <div class="highlight">
+          <p>Content Security Policy originally addressed Cross Site Request Forgery through the <a href="details-0.1.html#request-source">Request-Source</a> directive, but it has been removed from the proposal due to complexity, and network latency concerns.  The <code>Origin</code> header provides an an effective alternative for CSRF mitigation as described below.</p>
+          <p class="nomargin">Browser vendors who wish to implement the <code>Origin</code> header should refer to the <a href="https://wiki.mozilla.org/Security/Origin">specification document</a> for detailed information regarding when the request origin is sent versus when <code>null</code> is sent.</p>
+        </div>
+        <ul>
+          <li><b>Cross Site Request Forgery (CSRF)</b>
+            <ul>
+              <li>There <a href="http://www.cgisecurity.com/articles/csrf-faq.shtml">are</a> <a href="http://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)">many</a> <a href="http://www.isecpartners.com/documents/XSRF_Paper.pdf">good</a> <a href="http://crypto.stanford.edu/websec/csrf/">references</a> that describe threat and impact of CSRF.</li>
+              <li>CSRF exploits <em>a server's trust of the requests it receives from its clients</em>.  Attackers craft web content that, when viewed in the victim's browser, sends bogus requests to target websites on behalf of the victim.</li>
+            </ul>
+          </li>
+          <li><b><code>Origin</code> Header</b>
+            <ul>
+              <li>CSRF can be mitigated through the implementation of a new HTTP header, <b><code>Origin</code></b></li>
+              <li>Enables the client to send information about the origin of each request to the server.  Servers can use this information to decide if each request is valid or not.</li>
+              <li>Improvement over the <code>Referer</code> header which is supressed by some user agents due to privacy concerns.  <code>Origin</code> sends no path information, so there is no risk of leaking sensitive data in URL parameters.  It can therefore be used reliably to determine the legitimacy of cross-site requests.</li>
+            </ul>
+          </li>
+        </ul>
+        <h2>Further Details</h2>
+        <p>This <a href="https://wiki.mozilla.org/Security/Origin">specification document</a> will be used as the source of record in the Mozilla implementation of <code>Origin</code>.</p>
+        <p>The <code>Origin</code> header has been proposed in at least two places and the intent of the proposals are very similar:</p>
+        <ol>
+          <li>The W3C <a href="http://dev.w3.org/2006/waf/access-control/">Access Control</a> specification includes a section on the <a href="http://dev.w3.org/2006/waf/access-control/#origin0">Origin Request Header</a>.</li>
+          <li>Adam Barth, Collin Jackson, and John C. Mitchell <a href="http://crypto.stanford.edu/websec/csrf/">propose to implement</a> <code>Origin</code> as a response to CSRF attacks.</li>
+        </ol>
+        <p>Mozilla has a <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=446344">patch</a> currently under development which implements <code>Origin</code>.</p>
+        <p class="center"><a href="index.html">Overview</a> | <a href="details.html">Details</a> | <a href="https://dvcs.w3.org/hg/content-security-policy/raw-file/tip/csp-specification.dev.html">Spec</a> | <a href="download.html">Download</a> | <a href="demo.php">Demo</a> | <a href="wordpress.html">WordPress</a> | <a class="current" href="origin-header-proposal.html">Origin Header</a> | <a href="discussion.html">Discussion</a></p>
+      </div>
+    </div><!-- end main -->
+    <div id="footer"><a href="http://www.mozilla.com/firefox"><img src="images/FF.png" alt="Get Firefox" style="border:0;margin:.25em"/></a><br><small><a href="http://people.mozilla.org/~bsterne">bsterne 2011</a></small></div>
+  </div>
+</div>
+</body>
+</html>
+

@@ -1,0 +1,74 @@
+<html>
+<head>
+<link rel="stylesheet" href="style/style.css" type="text/css" />
+<title>Content Security Policy</title>
+</head>
+<body>
+<div id="outer">
+  <div id="inner">
+    <div id="header"><div id="headerWrap"><h1>Content Security Policy</h1></div></div>
+    <div id="hnav"><ul><li><a class="current" href="index.html">Overview</a></li><li><a href="details.html">Details</a></li><li><a href="https://dvcs.w3.org/hg/content-security-policy/raw-file/tip/csp-specification.dev.html">Spec</a></li><li><a href="download.html">Download</a></li><li><a href="demo.php">Demo</a></li><li><a href="wordpress.html">WordPress</a></li><li><a href="origin-header-proposal.html">Origin Header</a></li><li><a href="discussion.html">Discussion</a></li></ul></div>
+    <div id="main">
+      <div id="mainWrapper">
+        <div class="warning">
+          <p><b>Warning</b>: This site documents the original and <b>out-of-date</b> Mozilla proposal for Content Security Policy.</p>
+          <p>The current and official Content Security Policy specification is undergoing standardization at the <a href="http://www.w3.org/2011/webappsec/">W3C Web Application Security Working Group</a> and the latest revision of the specification can be found here:</p>
+          <p class="center"><b><a href="https://dvcs.w3.org/hg/content-security-policy/raw-file/tip/csp-specification.dev.html">CSP Specification</a></b></p>
+        </div>
+        <h2>Background</h2>
+        <p>The last 3 years have seen a dramatic increase in <a href="http://weblog.infoworld.com/zeroday/archives/2007/10/study_90_percen.html">both</a> <a href="http://weblog.infoworld.com/zeroday/archives/2007/11/report_90_perce.html">awareness</a> and <a href="http://www.webappsec.org/projects/whid/statistics.shtml">exploitation</a> of Web Application Vulnerabilities.  2008 saw dozens of <a href="http://www.webappsec.org/projects/whid/byyear_year_2008.shtml">high-profile attacks</a> against websites using Cross Site Scripting (XSS) and Cross Site Request Forgery (CSRF) for the purposes of information stealing, website defacement,  malware planting, etc.</p>
+        <p>It seems that while many sites are aware of these threats, and have programs in place to find and remediate the vulnerabilities, the sheer size and complexity of the websites make complete remediation of the security holes implausible.  Browser vendors can do more to protect users from client-side attacks involving websites that are vulnerable to the classes of attacks mentioned above.  This document proposes a mechanism that enables websites to define Content Security Policy which browsers can choose to enforce, restricting the capabilities of web content that make these attacks possible.</p>
+        <p>One might ask "if the vulnerable websites are aware of their shortcomings in Application Security, why won't they address the root cause and fix their vulnerabilities?"  It is true that the ideal solution is to develop web applications free from any exploitable vulnerabilities.  Real world security, however, is usually provided in layers and Content Security Policy intends to be only one layer.  Even the hypothetical vulnerability-free website can benefit from Content Security Policy.  Though the site may be free of vulnerabilities today, a new vulnerability may be introduced tomorrow which could remain fully mitigated by Content Security Policy until it is detected and fixed properly.</p>
+        <a name="goals"></a><h2>Goals</h2>
+        <p>Content Security Policy is intended to mitigate a large class of Web Application Vulnerabilities: <b>Cross Site Scripting</b>.  Cross Site Request Forgery has also become a large scale problem in Web Application Security, though it is not a primary focus of Content Security Policy.</p>
+        <p>A robust anti-CSRF mechanism is provided in the <a href="origin-header-proposal.html"><code>Origin</code> header proposal</a>, which is independent from Content Security Policy.</p>
+        <h3>Primary</h3>
+        <ul>
+          <li><b>Mitigate Cross Site Scripting (XSS)</b>
+            <ul>
+              <li>There are <a href="http://www.cgisecurity.com/articles/xss-faq.shtml">many</a> <a href="http://ha.ckers.org/xss.html">good</a> <a href="http://www.owasp.org/index.php/Cross_Site_Scripting">references</a> for those needing to familiarize themselves with XSS and the associated risks.</li>
+              <li>XSS exploits the <em>client's trust of the content received from the server</em>.  Malicious script is executed by the victim's browser because the victim trusts the source of the content.</li>
+              <li>Content Security Policy provides a way for server administrators to reduce or eliminate their XSS attack surface.
+                <ol>
+                  <li>Website administrators specify which domains the browser should treat as valid sources of script.</li>
+                  <li>The browser will only execute script in source files from the white-listed domains and will disregard everything else, including inline scripts and event-handling HTML attributes.
+                    <ul>
+                      <li>Note: <a href="details.html#event-handling">event-handling</a> is still enabled in CSP without using HTML attributes.</li>
+                    </ul>
+                  </li>
+                  <li>Sites that never want to have JavaScript included in their pages can choose to globally disallow script.</li>
+                </ol>
+              </li>
+            </ul>
+          </li>
+        </ul>
+        <h3>Secondary</h3>
+        <ul>
+          <li><b>Mitigate Clickjacking</b>
+            <ul>
+              <li><a href="http://jeremiahgrossman.blogspot.com/2008/10/clickjacking-web-pages-can-see-and-hear.html">Good</a> <a href="http://ha.ckers.org/blog/20080915/clickjacking/">references</a> are available which describe the threat and impact of clickjacking.</li>
+              <li>Clickjacking occurs when a malicious site directs a victim's mouse click onto an unintended target in another site, generally by framing the target site's content in a transparent &lt;iframe>.</li>
+              <li>Content Security Policy enables a site to specify <a href="details.html#frame-ancestors">which sites may embed a resource</a>.</li>
+            </ul>
+          </li>
+          <li><b>Mitigate Packet Sniffing Attacks</b>
+            <ul>
+              <li>In addition to restricting the locations from which content can load, websites can also specify which <a href="details.html#content-sources">protocols</a> may be used.</li>
+              <li>A website can use Content Security Policy to enforce that all content is served securely over HTTPS.
+                <ul>
+                  <li>Note: a complete strategy to enforce secure transmission of data will also include marking all cookies with the secure flag, and providing automatic redirects from HTTP pages to corresponding HTTPS pages.</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+        <h2>Compatibility</h2>
+        <p>Content Security Policy will be fully backward compatible and will not affect sites or browsers which don't support it.  Non-supporting browsers will disregard the Content Security Policy header and will default to the standard Same-Origin policy for webpage content.  In the absence of the Content Security Policy header, supporting browsers will also fall-back to the Same-Origin policy.  Website administrators can define Content Security Policy without fear of web compatibility issues.</p>
+        <p class="center"><a class="current" href="index.html">Overview</a> | <a href="details.html">Details</a> | <a href="https://dvcs.w3.org/hg/content-security-policy/raw-file/tip/csp-specification.dev.html">Spec</a> | <a href="download.html">Download</a> | <a href="demo.php">Demo</a> | <a href="wordpress.html">WordPress</a> | <a href="origin-header-proposal.html">Origin Header</a> | <a href="discussion.html">Discussion</a></p>
+      </div>
+    </div><!-- end main -->
+    <div id="footer"><a href="http://www.mozilla.com/firefox"><img src="images/FF.png" alt="Get Firefox" style="border:0;margin:.25em"/></a><br><small><a href="http://people.mozilla.org/~bsterne">bsterne 2011</a></small></div>
+  </div>
+</div>
+</body>
+</html>
